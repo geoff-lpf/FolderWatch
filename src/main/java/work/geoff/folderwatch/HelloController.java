@@ -4,15 +4,18 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 
 public class HelloController {
 	@FXML
 	private Label welcomeText;
 
 	@FXML
-	protected void onHelloButtonClick() {
+	protected void onHelloButtonClick() throws IOException, InterruptedException, AWTException {
 		welcomeText.setText("Welcome to JavaFX Application!");
+		new FolderWatcher();
 	}
 
 	protected void buttonSelectFolderClick() {
