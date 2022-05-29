@@ -3,50 +3,72 @@ package work.geoff.folderwatch;
 import java.awt.*;
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.concurrent.TimeUnit;
 
-import static java.nio.file.StandardWatchEventKinds.*;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
 public class FolderWatcher {
-	private Thread thread;
-	Path path;
-	public FolderWatcher() throws IOException, InterruptedException, AWTException {
 
-		WatchService watchService = FileSystems.getDefault().newWatchService();
-		path = Path.of("D:\\myFolder\\Desktop\\testFW");
-		path.register(watchService,
-		              ENTRY_CREATE,
-		              ENTRY_MODIFY);
+	private static WatchService watcher;
 
-		WatchKey key;
-		while ((key = watchService.take()) != null) {
-			for (WatchEvent<?> event : key.pollEvents()) {
-				System.out.println(event.context());
-				WatchEvent.Kind<?> kind = event.kind();
-				Path filename = (Path) event.context();
+	private static final String pathToWatch = "D:\\myFolder\\Desktop\\testFW";
 
-				if (kind == ENTRY_CREATE) {
-					showTrayMsg("NEW: " + filename.toString());
-					continue;
+	public FolderWatcher() {
+		Watcher myWatcher = new Watcher();
+		Thread thread = new Thread(myWatcher);
+		thread.start();
+	}
+
+	static class Watcher implements Runnable {
+		@Override
+		public void run() {
+//			WatchKey key;
+//			WatchService watcher = null;
+			try {
+				Path path = Path.of(pathToWatch);
+				watcher = FileSystems.getDefault().newWatchService();
+				path.register(watcher, ENTRY_CREATE, ENTRY_MODIFY);
+				WatchKey key = watcher.take();
+				while (key != null) {
+					for (WatchEvent<?> event : key.pollEvents()) {
+						WatchEvent.Kind<?> kind = event.kind();
+						Path filename = (Path) event.context();
+
+						if (kind == ENTRY_CREATE) {
+							showTrayMsg("NEW: " + filename.toString());
+							continue;
+						}
+						if (kind == ENTRY_MODIFY) {
+							showTrayMsg("MODIFY: " + filename.toString());
+						}
+					}
+					key.reset();
+					key = watcher.take();
+					Thread.sleep(200);
 				}
-				if (kind == ENTRY_MODIFY) {
-					showTrayMsg("MODIFY: " + filename.toString());
-				}
+			} catch (IOException | AWTException ignored) {
+			} catch (InterruptedException ie) {
+				Thread.currentThread().interrupt();
 			}
-			key.reset();
+		}
+
+		public void stopThread() throws IOException {
+			if (watcher != null) {
+				watcher.close();
+			}
 		}
 
 
-	}
 
-	public void showTrayMsg(String msg) throws AWTException {
-		final SystemTray tray = SystemTray.getSystemTray();
+		public void showTrayMsg(String msg) throws AWTException {
+			final SystemTray tray = SystemTray.getSystemTray();
 
-		Image image = Toolkit.getDefaultToolkit().createImage(getClass().getResource("image/proofreading.png"));
+			Image image = Toolkit.getDefaultToolkit().createImage(getClass().getResource("image/proofreading.png"));
 
-		TrayIcon trayIcon = new TrayIcon(image);
-		trayIcon.setImageAutoSize(true);
-		tray.add(trayIcon);
-		trayIcon.displayMessage("Folder Watcher", msg, TrayIcon.MessageType.INFO);
+			TrayIcon trayIcon = new TrayIcon(image);
+			trayIcon.setImageAutoSize(true);
+			tray.add(trayIcon);
+			trayIcon.displayMessage("Folder Watcher", msg, TrayIcon.MessageType.INFO);
+		}
 	}
 }

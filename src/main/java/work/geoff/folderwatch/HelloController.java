@@ -4,18 +4,22 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.File;
-import java.io.IOException;
 
 public class HelloController {
 	@FXML
 	private Label welcomeText;
 
 	@FXML
-	protected void onHelloButtonClick() throws IOException, InterruptedException, AWTException {
+	protected void onHelloButtonClick() {
 		welcomeText.setText("Welcome to JavaFX Application!");
-		new FolderWatcher();
+		var folderWatcher = new FolderWatchService("D:\\myFolder\\Desktop\\testFW");
+		Thread fwThread = new Thread(folderWatcher, "mainThread");
+
+		Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownCleaner(folderWatcher)));
+
+		fwThread.start();
+
 	}
 
 	protected void buttonSelectFolderClick() {
@@ -32,5 +36,20 @@ public class HelloController {
 
 	protected  void buttonRunClick() {
 
+	}
+
+	private static class ShutdownCleaner implements Runnable {
+		private final FolderWatchService service;
+
+		public ShutdownCleaner(FolderWatchService service) {
+			this.service = service;
+		}
+
+		@Override
+		public void run() {
+			if (service != null) {
+				service.stopThread();
+			}
+		}
 	}
 }
