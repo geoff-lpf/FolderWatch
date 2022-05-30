@@ -13,7 +13,7 @@ public class HelloController {
 	@FXML
 	protected void onHelloButtonClick() {
 		welcomeText.setText("Welcome to JavaFX Application!");
-		var folderWatcher = new FolderWatchService("D:\\myFolder\\Desktop\\testFW");
+		var folderWatcher = new FolderWatchService("D:\\myFolder\\Desktop\\testFW\\");
 		Thread fwThread = new Thread(folderWatcher, "mainThread");
 
 		Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownCleaner(folderWatcher)));
